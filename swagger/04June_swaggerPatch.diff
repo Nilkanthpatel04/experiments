@@ -1,0 +1,522 @@
+Index: src/main/resources/application.properties
+===================================================================
+--- src/main/resources/application.properties	(revision 0)
++++ src/main/resources/application.properties	(revision 0)
+@@ -0,0 +1 @@
++app.docs=http://localhost:8080
+
+Property changes on: src/main/resources/application.properties
+___________________________________________________________________
+Added: svn:executable
+   + *
+
+Index: src/com/gemstone/gemfire/management/internal/RestAgent.java
+===================================================================
+--- src/com/gemstone/gemfire/management/internal/RestAgent.java	(revision 47377)
++++ src/com/gemstone/gemfire/management/internal/RestAgent.java	(working copy)
+@@ -108,7 +108,8 @@
+           this.config.getRestServiceHttpPort(), this.config.getBindAddress()));
+     }
+       
+-    final String gemfireHome = System.getenv("GEMFIRE");
++    //final String gemfireHome = System.getenv("GEMFIRE");
++    final String gemfireHome = "/nhpatel2/work/code/latest_13Dec/Gemfire/build-artifacts/linux/product";
+     
+     // Check for empty variable. if empty, then log message and exit HTTP server startup
+     if (StringUtils.isBlank(gemfireHome)) {
+Index: src/com/gemstone/gemfire/rest/internal/web/config/ApiPathProvider.java
+===================================================================
+--- src/com/gemstone/gemfire/rest/internal/web/config/ApiPathProvider.java	(revision 0)
++++ src/com/gemstone/gemfire/rest/internal/web/config/ApiPathProvider.java	(revision 0)
+@@ -0,0 +1,51 @@
++package com.gemstone.gemfire.rest.internal.web.config;
++
++import com.mangofactory.swagger.core.SwaggerPathProvider;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.web.util.UriComponentsBuilder;
++ 
++import javax.servlet.ServletContext;
++ 
++public class ApiPathProvider implements SwaggerPathProvider {
++    private SwaggerPathProvider defaultSwaggerPathProvider;
++    @Autowired
++    private ServletContext servletContext;
++ 
++    private String docsLocation;
++ 
++    public ApiPathProvider(String docsLocation) {
++        //this.docsLocation = docsLocation;
++      this.docsLocation = "http://localhost:8080";
++    }
++ 
++    @Override
++    public String getApiResourcePrefix() {
++        return defaultSwaggerPathProvider.getApiResourcePrefix();
++    }
++ 
++    public String getAppBasePath() {
++        return UriComponentsBuilder
++                .fromHttpUrl(docsLocation)
++                .path(servletContext.getContextPath())
++                .build()
++                .toString();
++    }
++ 
++    @Override
++    public String getSwaggerDocumentationBasePath() {
++        return UriComponentsBuilder
++                .fromHttpUrl(getAppBasePath())
++                .pathSegment("api-docs/")
++                .build()
++                .toString();
++    }
++ 
++    @Override
++    public String getRequestMappingEndpoint(String requestMappingPattern) {
++        return defaultSwaggerPathProvider.getRequestMappingEndpoint(requestMappingPattern);
++    }
++ 
++    public void setDefaultSwaggerPathProvider(SwaggerPathProvider defaultSwaggerPathProvider) {
++        this.defaultSwaggerPathProvider = defaultSwaggerPathProvider;
++    }
++}
+\ No newline at end of file
+Index: src/com/gemstone/gemfire/rest/internal/web/config/SwaggerConfig.java
+===================================================================
+--- src/com/gemstone/gemfire/rest/internal/web/config/SwaggerConfig.java	(revision 0)
++++ src/com/gemstone/gemfire/rest/internal/web/config/SwaggerConfig.java	(revision 0)
+@@ -0,0 +1,193 @@
++package com.gemstone.gemfire.rest.internal.web.config;
++
++
++//import com.mangofactory.swagger.configuration.JacksonScalaSupport;
++import com.mangofactory.swagger.configuration.JacksonScalaSupport;
++import com.mangofactory.swagger.configuration.SpringSwaggerConfig;
++import com.mangofactory.swagger.configuration.SpringSwaggerModelConfig;
++import com.mangofactory.swagger.configuration.SwaggerGlobalSettings;
++import com.mangofactory.swagger.core.ClassOrApiAnnotationResourceGrouping;
++import com.mangofactory.swagger.core.DefaultSwaggerPathProvider;
++import com.mangofactory.swagger.core.SwaggerApiResourceListing;
++import com.mangofactory.swagger.core.SwaggerPathProvider;
++import com.mangofactory.swagger.scanners.ApiListingReferenceScanner;
++import com.wordnik.swagger.model.*;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.beans.factory.annotation.Value;
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.ComponentScan;
++import org.springframework.context.annotation.Configuration;
++ 
++import java.util.ArrayList;
++//import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.List;
++ 
++//import static com.google.common.collect.Lists.newArrayList;
++ 
++@Configuration
++@ComponentScan(basePackages = "com.mangofactory.swagger")
++public class SwaggerConfig {
++ 
++    public static final List<String> DEFAULT_INCLUDE_PATTERNS = Arrays.asList("/.*");
++    public static final String SWAGGER_GROUP = "gemfire-api";
++ 
++    @Value("${app.docs}")
++    private String docsLocation;
++ 
++    @Autowired
++    private SpringSwaggerConfig springSwaggerConfig;
++    @Autowired
++    private SpringSwaggerModelConfig springSwaggerModelConfig;
++ 
++    
++    /**
++     * Adds the jackson scala module to the MappingJackson2HttpMessageConverter registered with spring
++     * Swagger core models are scala so we need to be able to convert to JSON
++     * Also registers some custom serializers needed to transform swagger models to swagger-ui required json format
++    
++     */
++    
++    @Bean
++    public JacksonScalaSupport jacksonScalaSupport() {
++        JacksonScalaSupport jacksonScalaSupport = new JacksonScalaSupport();
++        //Set to false to disable
++        jacksonScalaSupport.setRegisterScalaModule(true);
++        return jacksonScalaSupport;
++    }
++    
++ 
++    /**
++     * Global swagger settings
++     */
++    @Bean
++    public SwaggerGlobalSettings swaggerGlobalSettings() {
++        SwaggerGlobalSettings swaggerGlobalSettings = new SwaggerGlobalSettings();
++        swaggerGlobalSettings.setGlobalResponseMessages(springSwaggerConfig.defaultResponseMessages());
++        swaggerGlobalSettings.setIgnorableParameterTypes(springSwaggerConfig.defaultIgnorableParameterTypes());
++        swaggerGlobalSettings.setParameterDataTypes(springSwaggerModelConfig.defaultParameterDataTypes());
++        return swaggerGlobalSettings;
++    }
++ 
++    /**
++     * API Info as it appears on the swagger-ui page
++     */
++    private ApiInfo apiInfo() {
++        ApiInfo apiInfo = new ApiInfo(
++                "News API",
++                "Mobile applications and beyond!",
++                "https://helloreverb.com/terms/",
++                "matt@raibledesigns.com",
++                "Apache 2.0",
++                "http://www.apache.org/licenses/LICENSE-2.0.html"
++        );
++        return apiInfo;
++    }
++ 
++    //@Bean
++    //public ClassOrApiAnnotationResourceGrouping classOrApiAnnotationResourceGrouping() {
++    //  ClassOrApiAnnotationResourceGrouping classOrApiAnnotationResourceGrouping = new ClassOrApiAnnotationResourceGrouping();
++    //  return classOrApiAnnotationResourceGrouping;
++    //}
++    /**
++     * Configure a SwaggerApiResourceListing for each swagger instance within your app. e.g. 1. private  2. external apis
++     * Required to be a spring bean as spring will call the postConstruct method to bootstrap swagger scanning.
++     *
++     * 
++     */
++    @Bean
++    public SwaggerApiResourceListing swaggerApiResourceListing() {
++        //The group name is important and should match the group set on ApiListingReferenceScanner
++        //Note that swaggerCache() is by DefaultSwaggerController to serve the swagger json
++        SwaggerApiResourceListing swaggerApiResourceListing = new SwaggerApiResourceListing(springSwaggerConfig.swaggerCache(), SWAGGER_GROUP);
++ 
++        //Set the required swagger settings
++        swaggerApiResourceListing.setSwaggerGlobalSettings(swaggerGlobalSettings());
++ 
++        //Use a custom path provider or springSwaggerConfig.defaultSwaggerPathProvider()
++        swaggerApiResourceListing.setSwaggerPathProvider(apiPathProvider());
++ 
++        //Supply the API Info as it should appear on swagger-ui web page
++        swaggerApiResourceListing.setApiInfo(apiInfo());
++ 
++        //Global authorization - see the swagger documentation
++        swaggerApiResourceListing.setAuthorizationTypes(authorizationTypes());
++ 
++        //Every SwaggerApiResourceListing needs an ApiListingReferenceScanner to scan the spring request mappings
++        swaggerApiResourceListing.setApiListingReferenceScanner(apiListingReferenceScanner());
++        return swaggerApiResourceListing;
++    }
++ 
++    @Bean
++    /**
++     * The ApiListingReferenceScanner does most of the work.
++     * Scans the appropriate spring RequestMappingHandlerMappings
++     * Applies the correct absolute paths to the generated swagger resources
++     */
++    public ApiListingReferenceScanner apiListingReferenceScanner() {
++        ApiListingReferenceScanner apiListingReferenceScanner = new ApiListingReferenceScanner();
++ 
++        //Picks up all of the registered spring RequestMappingHandlerMappings for scanning
++        apiListingReferenceScanner.setRequestMappingHandlerMapping(springSwaggerConfig.swaggerRequestMappingHandlerMappings());
++ 
++        //Excludes any controllers with the supplied annotations
++        apiListingReferenceScanner.setExcludeAnnotations(springSwaggerConfig.defaultExcludeAnnotations());
++ 
++        //
++        apiListingReferenceScanner.setResourceGroupingStrategy(springSwaggerConfig.defaultResourceGroupingStrategy());
++ 
++        //Path provider used to generate the appropriate uri's
++        apiListingReferenceScanner.setSwaggerPathProvider(apiPathProvider());
++ 
++        //Must match the swagger group set on the SwaggerApiResourceListing
++        apiListingReferenceScanner.setSwaggerGroup(SWAGGER_GROUP);
++ 
++        //Only include paths that match the supplied regular expressions
++        apiListingReferenceScanner.setIncludePatterns(DEFAULT_INCLUDE_PATTERNS);
++ 
++        return apiListingReferenceScanner;
++    }
++ 
++    /**
++     * Example of a custom path provider
++     */
++    @Bean
++    public ApiPathProvider apiPathProvider() {
++        ApiPathProvider apiPathProvider = new ApiPathProvider(docsLocation);
++        apiPathProvider.setDefaultSwaggerPathProvider(springSwaggerConfig.defaultSwaggerPathProvider());
++        return apiPathProvider;
++    }
++ 
++    
++    private List<AuthorizationType> authorizationTypes() {
++        ArrayList<AuthorizationType> authorizationTypes = new ArrayList<AuthorizationType>();
++ 
++        List<AuthorizationScope> authorizationScopeList = new ArrayList<AuthorizationScope>();
++        authorizationScopeList.add(new AuthorizationScope("global", "access all"));
++ 
++        List<GrantType> grantTypes = new ArrayList<GrantType>();
++ 
++        LoginEndpoint loginEndpoint = new LoginEndpoint(apiPathProvider().getAppBasePath() + "/user/authenticate");
++        grantTypes.add(new ImplicitGrant(loginEndpoint, "access_token"));
++ 
++        return authorizationTypes;
++    }
++    
++    @Bean
++    public SwaggerPathProvider relativeSwaggerPathProvider() {
++        return new ApiRelativeSwaggerPathProvider();
++    }
++ 
++    private class ApiRelativeSwaggerPathProvider extends DefaultSwaggerPathProvider {
++        @Override
++        public String getAppBasePath() {
++            return "/";
++        }
++ 
++        @Override
++        public String getSwaggerDocumentationBasePath() {
++            return "/api-docs";
++        }
++    }
++}
++
+Index: src/com/gemstone/gemfire/rest/internal/web/controllers/PdxBasedCrudController.java
+===================================================================
+--- src/com/gemstone/gemfire/rest/internal/web/controllers/PdxBasedCrudController.java	(revision 47377)
++++ src/com/gemstone/gemfire/rest/internal/web/controllers/PdxBasedCrudController.java	(working copy)
+@@ -44,6 +44,7 @@
+ import com.gemstone.org.json.JSONObject;
+ import com.gemstone.org.json.JSONTokener;
+ import com.springsource.vfabric.licensing.events.ConsumeServerLicenseEvent;
++import com.wordnik.swagger.annotations.ApiOperation;
+ 
+ /**
+  * The PdxBasedCrudController class serving REST Requests related to the REST CRUD operation on region
+@@ -77,6 +78,7 @@
+   @RequestMapping(method = RequestMethod.POST, value = "/{region}",
+                   consumes = MediaType.APPLICATION_JSON_VALUE,
+                   produces = { MediaType.APPLICATION_JSON_VALUE })
++  @ApiOperation(value = "create", notes = "create new entry")
+   public ResponseEntity<?> create(@PathVariable("region") String region,
+       @RequestParam(value = "key", required = false) String key,
+       @RequestBody final String json) {
+@@ -115,6 +117,7 @@
+    * @return JSON document
+    */
+   @RequestMapping(method = RequestMethod.GET, value = "/{region}", produces = MediaType.APPLICATION_JSON_VALUE)
++  @ApiOperation(value = "read", notes = "Read set of data")
+   public ResponseEntity<?> read(@PathVariable("region") String region,
+       @RequestParam(value = "limit", defaultValue = DEFAULT_GETALL_RESULT_LIMIT) final String limit) {
+     
+Index: src/com/gemstone/gemfire/rest/internal/web/controllers/CommonCrudController.java
+===================================================================
+--- src/com/gemstone/gemfire/rest/internal/web/controllers/CommonCrudController.java	(revision 47377)
++++ src/com/gemstone/gemfire/rest/internal/web/controllers/CommonCrudController.java	(working copy)
+@@ -19,6 +19,8 @@
+ import com.gemstone.gemfire.cache.Region;
+ import com.gemstone.gemfire.internal.util.ArrayUtils;
+ import com.gemstone.gemfire.rest.internal.web.util.JSONUtils;
++import com.wordnik.swagger.annotations.Api;
++import com.wordnik.swagger.annotations.ApiOperation;
+ 
+ import org.springframework.hateoas.Link;
+ import org.springframework.http.HttpHeaders;
+@@ -38,6 +40,7 @@
+  */
+ 
+ @SuppressWarnings("unused")
++@Api(value = "data operations", description = "News API")
+ public abstract class CommonCrudController extends AbstractBaseController {
+   
+   /**
+@@ -45,6 +48,7 @@
+    * @return JSON document containing result
+    */
+   @RequestMapping(method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_JSON_VALUE })
++  @ApiOperation(value = "regions", notes = "Returns news items")
+   public ResponseEntity<?> regions() {
+     
+     logger.info(String.format("Listing all resources (Regions) in GemFire..."));
+Index: build.xml
+===================================================================
+--- build.xml	(revision 47377)
++++ build.xml	(working copy)
+@@ -610,6 +610,11 @@
+       <fileset file="${tomcat-embed-jasper.jar}"/>
+       <fileset file="${tomcat-embed-logging-juli.jar}"/>
+       <fileset file="${xom.jar}"/>
++      <fileset file="${swagger-springmvc.jar}"/>
++      <fileset file="${swagger-core.jar}"/>
++      <fileset file="${swagger-annotations.jar}"/>
++      <fileset file="${jackson-module-scala.jar}"/>
++      <fileset file="${scala-library.jar}"/>
+     </copy>
+     
+     <conditional unless="disable-bundlor">
+@@ -744,7 +749,8 @@
+       <!-- Need to exclude the GemFire Management and Monitoring REST API classes; these classes will be packaged
+            in the 'gemfire' web application WAR file (WEB-INF/classes) dir -->
+       <exclude name="com/gemstone/gemfire/management/internal/web/**/*.java"/>
+-       
++      <!--exclude name="com/gemstone/gemfire/rest/internal/web/**/*.java"/-->
++    	
+       <classpath>
+         <pathelement location="${commons-logging.jar}"/>
+         <pathelement location="${commons-modeler.jar}"/>
+@@ -773,7 +779,12 @@
+         <pathelement location="${spring-web-servlet.jar}"/>
+         <pathelement location="${tomcat-embed-core.jar}"/>
+         <pathelement location="${vfabric-license-client.jar}"/>
+-        <pathelement location="${xom.jar}"/>      
++        <pathelement location="${xom.jar}"/> 
++      	<pathelement location="${swagger-springmvc.jar}"/>
++      	<pathelement location="${swagger-core.jar}"/>
++      	<pathelement location="${swagger-annotations.jar}"/>
++      	<pathelement location="${jackson-module-scala.jar}"/>
++      	<pathelement location="${scala-library.jar}"/>      	
+       </classpath>
+     </javac>
+ 
+@@ -1466,6 +1477,7 @@
+ 
+     <fileset id="gemfireJar.files" dir="${classes.dir}">
+       <exclude name="com/gemstone/gemfire/management/internal/web/**/*.class"/>
++      <!--exclude name="com/gemstone/gemfire/rest/internal/web/**/*.class"/-->
+     </fileset>
+ 
+     <delete file="${product.lib.dir}/${gemfire.jar.name}" quiet="true"/>
+@@ -3548,6 +3560,11 @@
+         <pathelement location="${spring-web.jar}"/>
+         <pathelement location="${spring-web-servlet.jar}"/>
+         <pathelement location="${tomcat-embed-core.jar}"/>
++      	<pathelement location="${swagger-springmvc.jar}"/>
++      	<pathelement location="${swagger-core.jar}"/>
++        <pathelement location="${swagger-annotations.jar}"/>
++        <pathelement location="${jackson-module-scala.jar}"/>
++      	<pathelement location="${scala-library.jar}"/>
+       </classpath>
+     </javac>
+   	
+@@ -3581,11 +3598,17 @@
+   	<copy file="${jackson-core.jar}" todir="${osbuild.dir}/Web_tmp/target/gemfire-api/WEB-INF/lib" force="true"/>
+   	<copy file="${jackson-databind.jar}" todir="${osbuild.dir}/Web_tmp/target/gemfire-api/WEB-INF/lib" force="true"/>
+   	<copy file="${jackson-annotations.jar}" todir="${osbuild.dir}/Web_tmp/target/gemfire-api/WEB-INF/lib" force="true"/>
++  	
++  	<copy file="${swagger-springmvc.jar}" todir="${osbuild.dir}/Web_tmp/target/gemfire-api/WEB-INF/lib" force="true"/>
++  	<copy file="${swagger-core.jar}" todir="${osbuild.dir}/Web_tmp/target/gemfire-api/WEB-INF/lib" force="true"/>
++  	<copy file="${swagger-annotations.jar}" todir="${osbuild.dir}/Web_tmp/target/gemfire-api/WEB-INF/lib" force="true"/>
++  	<copy file="${jackson-module-scala.jar}" todir="${osbuild.dir}/Web_tmp/target/gemfire-api/WEB-INF/lib" force="true"/>
++  	<copy file="${scala-library.jar}" todir="${osbuild.dir}/Web_tmp/target/gemfire-api/WEB-INF/lib" force="true"/>
+   	<!-- create new gemfire-web.jar file -->
+     <jar file="${product.lib.dir}/${gemfire-web.jar.name}" basedir="${osbuild.dir}/Web_tmp/target/gemfire/WEB-INF/classes"/>
+   	
+     <!-- Added for the developer REST interface-->
+-  	<!-- create new gemfire-web.jar file -->
++  	<!-- create new gemfire-api-web.jar file -->
+     <jar file="${product.lib.dir}/${gemfire-api-web.jar.name}" basedir="${osbuild.dir}/Web_tmp/target/gemfire-api/WEB-INF/classes"/>
+ 
+     <!-- create the gemfire WAR file -->
+Index: tests/com/gemstone/gemfire/rest/internal/web/controllers/RestAPIsQueryAndFEJUnitTest.java
+===================================================================
+--- tests/com/gemstone/gemfire/rest/internal/web/controllers/RestAPIsQueryAndFEJUnitTest.java	(revision 47377)
++++ tests/com/gemstone/gemfire/rest/internal/web/controllers/RestAPIsQueryAndFEJUnitTest.java	(working copy)
+@@ -1267,26 +1267,26 @@
+       this.hostName = ManagementConstants.DEFAULT_HOST_NAME;
+     }
+     
+-    this.baseURL = "http://" + this.hostName + ":" + this.restServicePort;
++    //this.baseURL = "http://" + this.hostName + ":" + this.restServicePort;
+     
+     //Debug code
+-    //this.baseURL = "http://" + "localhost" + ":" + "8080";
+-    
++    this.baseURL = "http://" + "localhost" + ":" + "8080";
++    /*
+     this.c = (GemFireCacheImpl) new CacheFactory().set("mcast-port", "0")
+         .set("rest-service-http-port", String.valueOf(this.restServicePort))
+         .set("bind-address", this.hostName)
+         //.set("log-file", "./restJunitLogs/my.log")
+         .setPdxReadSerialized(true).create();
+-     
++     */
+     //Debug code
+-    /*
++    
+     this.c = (GemFireCacheImpl) new CacheFactory().set("mcast-port", "0")
+         .set("rest-service-http-port", "8080")
+         .set("bind-address", "localhost")
+         //.set("log-file", "./restJunitLogs/my.log")
+         .setPdxReadSerialized(true).create();
+-    */
+     
++    
+     //start cache-server, Gemfire cache clients will connect it
+     BridgeServer server = c.addBridgeServer();
+     final int serverPort = 40405;
+@@ -1448,14 +1448,14 @@
+       
+       for (int index=0; index < totalRequests; index++) { 
+       //Debug code
+-      /* 
++       
+       System.out.println("-------------------------------");
+       System.out.println("Index:" + index+ " " +  TEST_DATA[index][METHOD_INDEX] + " " + TEST_DATA[index][URL_INDEX]);
+                  
+        if(index == 50){
+          System.out.println("Debug Here...!!");
+        }
+-       */
++       
+        try {    
+           expectedEx = addExpectedException(index);
+           final String restRequestUrl = createRestURL(this.baseURL, TEST_DATA[index][URL_INDEX]);  
+Index: buildfiles/dependencies.xml
+===================================================================
+--- buildfiles/dependencies.xml	(revision 47377)
++++ buildfiles/dependencies.xml	(working copy)
+@@ -411,6 +411,21 @@
+   <property name="spring-hateoas.version" value="0.6.0"/>
+   <property name="spring-hateoas.jar.name" value="spring-hateoas-${spring-hateoas.version}.RELEASE.jar"/>
+ 
++   <!-- Added for swagger-->
++   <property name="swagger-springmvc.jar.name" value="swagger-springmvc-0.8.2.jar"/>
++   <property name="swagger-core.jar.name" value="swagger-core_2.10-1.3.2.jar"/>
++   <property name="swagger-annotations.jar.name" value="swagger-annotations-1.3.2.jar"/>
++   <property name="jackson-module-scala.jar.name" value="jackson-module-scala_2.10-2.1.3.jar"/>
++   <property name="scala-library.jar.name" value="scala-library-2.10.2-rc1.jar"/>
++	
++	
++   <property name="swagger-springmvc.jar" value="/nhpatel2/swagger/${swagger-springmvc.jar.name}"/>
++   <property name="swagger-core.jar" value="/nhpatel2/swagger/${swagger-core.jar.name}"/>
++   <property name="swagger-annotations.jar" value="/nhpatel2/swagger/${swagger-annotations.jar.name}"/>
++   <property name="jackson-module-scala.jar" value="/nhpatel2/swagger/${jackson-module-scala.jar.name}"/>
++   <property name="jackson-module-scala.jar" value="/nhpatel2/swagger/${jackson-module-scala.jar.name}"/>
++   <property name="scala-library.jar" value="/nhpatel2/swagger/${scala-library.jar.name}"/>
++	
+   <!-- TODO review the dependencies and determine which ones are actually used. -->
+   <getdependency name="activation.jar" location="where/java/javaMail/${activation.jar.name}"/>
+   <getdependency name="ant.dependency.dir" type="dir" location="where/java/ant/apache-ant-1.8.4" forClasspath="false"/>
+@@ -508,6 +523,7 @@
+   <getdependency name="jackson-core.jar" location="where/java/json/${jackson-core.version}/${jackson-core.jar.name}"/>
+   <getdependency name="jackson-annotations.jar" location="where/java/json/${jackson-annotations.version}/${jackson-annotations.jar.name}"/>
+   <getdependency name="spring-hateoas.jar" location="where/java/spring/spring-hateoas/${spring-hateoas.version}/${spring-hateoas.jar.name}"/>
++	
+   <target name="-custom-deps"/>
+ 
+ </project>
+Index: buildfiles/tests.xml
+===================================================================
+--- buildfiles/tests.xml	(revision 47377)
++++ buildfiles/tests.xml	(working copy)
+@@ -69,7 +69,11 @@
+       <pathelement location="${jackson-annotations.jar}"/>
+       <pathelement location="${spring-expression.jar}"/>
+       <pathelement location="${spring-hateoas.jar}"/>
+-
++      <pathelement location="${swagger-springmvc.jar}"/>
++      <pathelement location="${swagger-core.jar}"/>
++      <pathelement location="${swagger-annotations.jar}"/>
++      <pathelement location="${jackson-module-scala.jar}"/>
++      <pathelement location="${scala-library.jar}"/>
+     </path>
+     <path id="dunit.classpath">
+       <path refid="base.test.classpath"/>
