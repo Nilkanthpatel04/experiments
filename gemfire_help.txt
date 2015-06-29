@@ -1,0 +1,130 @@
+setupQuickstart.sh
+===================
+GEMFIRE=/export/gcm/where/gemfire/70/snaps.Any/snapshots.40148/product; export GEMFIRE 
+CLASSPATH=$GEMFIRE/lib/gemfire.jar:$GEMFIRE/lib/antlr.jar:$GEMFIRE/lib/gfSecurityImpl.jar:$CLASSPATH; export CLASSPATH 
+JAVA_HOME=/gcm/where/cplusplus/thirdparty/linux/jdk1.6.0_26; export JAVA_HOME
+GF_JAVA_HOME=$JAVA_HOME; export GF_JAVA_HOME
+PATH=$JAVA_HOME/bin:$GEMFIRE/bin:$PATH; export PATH
+GFCPP=/export/pnq-gst-dev02a/users/nhpatel/NativeClient_Solaris_32bit_7010_b5886; export GFCPP
+OPENSSL=/gcm/where/cplusplus/thirdparty/solaris/openssl_101c/ssllibs; export OPENSSL 
+LD_LIBRARY_PATH=$GFCPP/lib:${LD_LIBRARY_PATH}; export LD_LIBRARY_PATH
+
+setupQckStart.sh
+================
+cd /export/pnq-gst-dev02a/users/nhpatel/trunk/build-artifacts/sol/product
+GEMFIRE=/export/pnq-gst-dev02a/users/nhpatel/trunk/build-artifacts/sol/product; export GEMFIRE 
+CLASSPATH=$GEMFIRE/lib/gemfire.jar:$GEMFIRE/lib/antlr.jar:$GEMFIRE/lib/gfSecurityImpl.jar:$CLASSPATH; export CLASSPATH 
+JAVA_HOME=/gcm/where/cplusplus/thirdparty/solaris/jdk1.6.0_26; export JAVA_HOME
+GF_JAVA_HOME=$JAVA_HOME; export GF_JAVA_HOME
+PATH=$JAVA_HOME/bin:$GEMFIRE/bin:$PATH; export PATH
+GFCPP=/export/pnq-gst-dev02a/users/nhpatel/ThinClient/build-artifacts/sol/product; export GFCPP
+OPENSSL=/gcm/where/cplusplus/thirdparty/solaris/openssl_101c/ssllibs; export OPENSSL 
+LD_LIBRARY_PATH=$GFCPP/lib:${LD_LIBRARY_PATH}; export LD_LIBRARY_PATH
+LD_LIBRARY_PATH=$OPENSSL/lib:${LD_LIBRARY_PATH}; export LD_LIBRARY_PATH
+
+buildwin.properties
+====================
+#gfe.dir=//inf1/shared/where/gemfire/65/snaps.Any/snapshots.29218/gf65sancout/product
+#gfe.dir=J:/where/gemfire/65/snaps.Any/snapshots.29218/gf65sancout/product
+#gfe.dir=E:/work/code/snapshots.32842/product
+#gfe.dir=E:/work/code/product
+#gfe.dir=E:/work/code/aspen_dev_Apr12/build-artifacts/win/product
+gfe.dir=E:/gemfire/trunk/build-artifacts/win/product
+#gfe.dir=E:/gemfire/gfe_on_vsphere_dev_Dec11/build-artifacts/win/product
+#skipsandcastle=true
+#thirdparty.libs.dir=E:/work/code/thirdparty/windows64
+#gfe.dir=J:/where/gemfire/65/snaps.Any/snapshots.29757/product
+#osbuild.dir=E:/gemfire/ThinClient_post36/build-artifacts/win
+
+buildlinux.properties
+=====================
+#gfe.dir=//inf1/shared/where/gemfire/65/snaps.Any/snapshots.29218/gf65sancout/product
+#gfe.dir=J:/where/gemfire/65/snaps.Any/snapshots.29218/gf65sancout/product
+#gfe.dir=E:/work/code/snapshots.32842/product
+#gfe.dir=E:/work/code/product
+gfe.dir=/export/marlin2/users/npatel/trunk/build-artifacts/win/product
+#gfe.dir=E:/gemfire/gfe_on_vsphere_dev_Dec11/build-artifacts/win/product
+skipsandcastle=true
+#thirdparty.libs.dir=E:/work/code/thirdparty/windows64
+#gfe.dir=J:/where/gemfire/65/snaps.Any/snapshots.29757/product
+#osbuild.dir=E:/gemfire/ThinClient_post36/build-artifacts/win
+
+buildsol.properties
+====================
+#gfe.dir=//inf1/shared/where/gemfire/65/snaps.Any/snapshots.29218/gf65sancout/product
+#gfe.dir=J:/where/gemfire/65/snaps.Any/snapshots.29218/gf65sancout/product
+#gfe.dir=E:/work/code/snapshots.32842/product
+#gfe.dir=E:/work/code/product
+gfe.dir=/home/npatel/npatel/trunk/build-artifacts/sol/product
+#gfe.dir=E:/gemfire/gfe_on_vsphere_dev_Dec11/build-artifacts/win/product
+skipsandcastle=true
+#thirdparty.libs.dir=E:/work/code/thirdparty/windows64
+#gfe.dir=J:/where/gemfire/65/snaps.Any/snapshots.29757/product
+#osbuild.dir=E:/gemfire/ThinClient_post36/build-artifacts/win
+
+StartServers.bat
+=================
+REM mkdir gfeloc
+REM call gemfire start-locator -port=34756 -dir=gfeloc 
+mkdir gfecs
+REM call cacheserver start cache-xml-file=../CQTest.xml locators=localhost[34756] mcast-port=0 -dir=gfecs 
+call cacheserver start cache-xml-file=../Test779.xml mcast-port=0 -dir=gfecs 
+cacheserver start -J-Xdebug -J-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000 cache-xml-file=../CQTest.xml mcast-port=0 -dir=gfecs 
+ 
+gemfire start-locator -port=50505 -dir=gfeloc
+START Locator 
+/export/shared/where/gemfire/66/snaps.Any/snapshots.34761/product/bin/gemfire start-locator -port=50505 -dir=gfeloc
+ 
+//cacheserver start cache-xml-file=cacheserver.xml mcast-port=0 -dir=gfecs locators=localhost:50505
+Start cacheserver:
+/export/shared/where/gemfire/66/snaps.Any/snapshots.34761/product/bin/cacheserver start cache-xml-file=/export/marlin2/users/npatel/MorningStar/cacheserverBug843.xml mcast-port=0 -dir=gfecs locators=localhost:50505
+ 
+STOP cacheserver
+==================
+/export/shared/where/gemfire/66/snaps.Any/snapshots.34761/product/bin/cacheserver stop -dir=gfecs
+ 
+ 
+[-J<vmarg>]* [<attName>=<attValue>]* [-dir=<workingdir>] [-classpath=<classpath>] [-disable-default-server] [-rebalance] [-server-port=<server-port>] [-server-bind-address=<server-bind-address>]
+ 
+        Starts a GemFire CacheServer VM
+        <vmarg> a VM-option passed to the spawned CacheServer VM, example -J-Xmx1024M for a 1 Gb heap
+        <workingdir> Directory in which cacheserver runs, default is the current directory
+        <classpath> Location of user classes required by the cache server.  This path is appended to the current classpath.
+        <attName> Distributed system attribute such as "mcast-port" or "cache-xml-file".
+        -rebalance  Indicates that the Cache should immediately be rebalanced
+        -disable-default-server  Do not add a default <cache-server>
+        <server-port>  Port the server is to listen on for client connections. This overrides the port set in the <cache-server> element of the "cache-xml-file"
+        <server-bind-address>  Address the server is to listen on for client connections. This overrides the bind-address set in the <cache-server> element of the "cache-xml-file"
+ 
+ sh -x build.sh
+--------------------------------------------------------------
+ //Find running process by name here running process is java
+  ps -aef | grep java
+--------------------------------------------------------------
++ IO error
++ Bad file descriptor]
+--------------------------------------------------------------  
+ /*****************  GDB Help
+ 
+//How to run program with GDB
+1: use g++ -g option
+2. 
+ //How to attach GDB to running process
+step:1 $ gdb
+step:2 gdb> attache pid
+step:3 gdb> detach
+
+stopServer.bat (windows)
+============================
+REM call gemfire stop-locator -port=34756 -dir=gfeloc 
+call cacheserver stop -dir=gfecs 
+ 
+rmdir /S /Q gfecs
+REM  rmdir /S /Q gfeloc
+
+Run Gemfire Native Client C# or cSharp Test
+===========================================
+./build.sh run-csharp-tests -Dcsharp.testcase=ThinClientQueryTests -DlogLevel=debug -DgfeLogLevel=all
+
+
+
