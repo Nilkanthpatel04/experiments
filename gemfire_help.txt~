@@ -133,10 +133,5 @@ MSSDK = C:\Program Files (x86)\Microsoft SDKs
 VS100COMNTOOLS = e:\MSVS10.0\Common7\Tools\
 VS10INSTALLDIR = E:\MSVS10.0
 
-svn merge command
-===================
-svn merge -c 4452 https://svn.gemstone.com/repos/gfcpp/branches/prsinglehopev_Feb10
-
-svn merge -c 5029 https://svn.gemstone.com/repos/gfcpp/branches/ThinClient_cstx --accept=postpone
 
 

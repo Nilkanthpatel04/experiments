@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
+	<classpathentry kind="lib" path="E:/work/code/cedar/cedar_dev_Oct12/build-artifacts/win/product/lib/gemfire.jar"/>
+	<classpathentry kind="lib" path="E:/work/code/cedar/cedar_dev_Oct12/build-artifacts/win/product/lib/gemfire-api-web.jar"/>
+	<classpathentry kind="lib" path="E:/work/code/cedar/cedar_dev_Oct12/build-artifacts/win/product/lib/jackson-annotations-2.2.0.jar"/>
+	<classpathentry kind="lib" path="E:/work/code/cedar/cedar_dev_Oct12/build-artifacts/win/product/lib/jackson-core-2.2.0.jar"/>
+	<classpathentry kind="lib" path="E:/work/code/cedar/cedar_dev_Oct12/build-artifacts/win/product/lib/jackson-databind-2.2.0.jar"/>
+	<classpathentry kind="lib" path="E:/work/code/cedar/cedar_dev_Oct12/build-artifacts/win/product/lib/spring-aop-3.2.9.RELEASE.jar"/>
+	<classpathentry kind="lib" path="E:/work/code/cedar/cedar_dev_Oct12/build-artifacts/win/product/lib/spring-beans-3.2.9.RELEASE.jar"/>
+	<classpathentry kind="lib" path="E:/work/code/cedar/cedar_dev_Oct12/build-artifacts/win/product/lib/spring-context-3.2.9.RELEASE.jar"/>
+	<classpathentry kind="lib" path="E:/work/code/cedar/cedar_dev_Oct12/build-artifacts/win/product/lib/spring-context-support-3.2.9.RELEASE.jar"/>
+	<classpathentry kind="lib" path="E:/work/code/cedar/cedar_dev_Oct12/build-artifacts/win/product/lib/spring-core-3.2.9.RELEASE.jar"/>
+	<classpathentry kind="lib" path="E:/work/code/cedar/cedar_dev_Oct12/build-artifacts/win/product/lib/spring-data-gemfire-1.4.0.RELEASE.jar"/>
+	<classpathentry kind="lib" path="E:/work/code/cedar/cedar_dev_Oct12/build-artifacts/win/product/lib/spring-expression-3.2.9.RELEASE.jar"/>
+	<classpathentry kind="lib" path="E:/work/code/cedar/cedar_dev_Oct12/build-artifacts/win/product/lib/spring-web-3.2.9.RELEASE.jar"/>
+	<classpathentry kind="lib" path="E:/work/code/cedar/javaCleint_jars/spring-oxm-3.2.2.RELEASE.jar"/>
+	<classpathentry kind="lib" path="E:/work/code/cedar/cedar_dev_Oct12/build-artifacts/win/product/lib/commons-io-2.3.jar"/>
+	<classpathentry kind="lib" path="E:/work/code/cedar/cedar_dev_Oct12/build-artifacts/win/product/lib/commons-logging-1.1.1.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

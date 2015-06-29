@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE cache PUBLIC
+  "-//GemStone Systems, Inc.//GemFire Declarative Caching 7.0//EN"
+  "http://www.gemstone.com/dtd/cache7_0.dtd">
+<cache>
+  <region name="People" refid="REPLICATE">
+  </region>
+  
+  <region name="orders" refid="PERSISTENT_PARTITION">
+  </region>
+
+  <region name="customers" refid="REPLICATE">
+  </region>
+
+  <region name="items" refid="PARTITION">
+  </region>
+ 
+  <function-service>
+    <function>
+      <class-name>com.gemstone.gemfire.web.rest.domain.GetRegions</class-name>
+    </function>
+    <function>
+      <class-name>com.gemstone.gemfire.web.rest.domain.GetDeliveredOrders</class-name>
+    </function>
+   <function>
+      <class-name>com.gemstone.gemfire.web.rest.domain.AddFreeItemToOrders</class-name>
+    </function>
+  </function-service>
+</cache>

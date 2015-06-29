@@ -1,0 +1,247 @@
+
+GET /gemfire-api/v1/queries/adhoc?q=<OQL-statement>
+run an unnamed (unidentified), ad-hoc query passed as a URL parameter,
+
+
+http://localhost:8080/gemfire-api/v1/queries/adhoc?q=SELECT firstName, gender, cars from /People
+
+http://localhost:8080/gemfire-api/v1/queries/adhoc?q=SELECT firstName, gender, cars from /People Where id= '101'
+
+http://localhost:8080/gemfire-api/v1/queries/adhoc?q=SELECT cars from /People
+
+http://localhost:8080/gemfire-api/v1/queries/adhoc?q=SELECT cars from /People where gender = 'MALE'
+
+http://localhost:8080/gemfire-api/v1/queries/adhoc?q=SELECT id, cars from /People 
+
+http://localhost:8080/gemfire-api/v1/queries/adhoc?q=SELECT * from /People 
+
+http://localhost:8080/gemfire-api/v1/queries/adhoc?q=SELECT * from /People where id = '101'
+
+http://localhost:8080/gemfire-api/v1/queries/adhoc?q=SELECT * from /People where firstName = 'Angita'
+
+http://localhost:8080/gemfire-api/v1/queries/adhoc?q=SELECT * from /People where gender= 'MALE'
+
+http://localhost:8080/gemfire-api/v1/queries/adhoc?q=SELECT * from /People p where p.Address.permanent.city= 'Lunawada'
+
+http://localhost:8080/gemfire-api/v1/queries/adhoc?q=SELECT * from /People p where p.Address.present.streetName= 'Tingrenagar'
+
+//All the people having Bank account in 'SBI'
+http://localhost:8080/gemfire-api/v1/queries/adhoc?q=SELECT * FROM /People p1 WHERE p1.id IN (SELECT p2.id FROM /People p2, p2.account acc WHERE acc.bankName =  'SBI' )
+
+//Name and Address of the Peoplea having Bank account in 'SBI'
+http://localhost:8080/gemfire-api/v1/queries/adhoc?q=SELECT p1.firstName, p1.Address FROM /People p1 WHERE p1.id IN (SELECT p2.id FROM /People p2, p2.account acc WHERE acc.bankName =  'SBI' )
+
+// Name and Car details of Person having bank account in 'Axis'
+http://localhost:8080/gemfire-api/v1/queries/adhoc?q=SELECT p1.firstName, p1.cars FROM /People p1 WHERE p1.id IN (SELECT p2.id FROM /People p2, p2.account acc WHERE acc.bankName =  'Axis' )
+
+//All Persons having tata car
+http://localhost:8080/gemfire-api/v1/queries/adhoc?q=SELECT * from /People p where p.cars.contains('tata')
+
+//present Address of all peoples having either audi or honda car.
+http://localhost:8080/gemfire-api/v1/queries/adhoc?q=SELECT Address.present from /People p where p.cars.contains('audi') OR p.cars.contains('honda')
+
+//Find All Bank Names, Account numbers having car 'tata'
+http://localhost:8080/gemfire-api/v1/queries/adhoc?q=SELECT acc.bankName, acc.accNumber FROM /People AS p2, p2.account acc WHERE p2.cars.contains('tata')
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+POST /gemfire-api/v1/queries?id=<queryId>&q=<OQL-statement>
+prepare the specified parameterized query and assign the corresponding ID for lookup,
+
+1. 
+http://localhost:8080/gemfire-api/v1/queries?id=findAllPeople&q=SELECT * FROM /People
+
+2. findAllMales
+http://localhost:8080/gemfire-api/v1/queries?id=filterByGender&q=SELECT * from /People where gender= $1
+
+3. filerByBank
+http://localhost:8080/gemfire-api/v1/queries?id=filterByBank&q=SELECT * FROM /People p1 WHERE p1.id IN (SELECT p2.id FROM /People p2, p2.account acc WHERE acc.bankName =  $1 )
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+GET /gemfire-api/v1/queries/{query}?args=value1,value2,...,valueN
+run the specified named query passing in scalar values for query parameters,
+
+http://localhost:8080/gemfire-api/v1/queries/findAllPeople?args=dummy
+
+http://localhost:8080/gemfire-api/v1/queries/filterByGender?args=MALE
+
+http://localhost:8080/gemfire-api/v1/queries/filterByBank?args=SBI
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+Functions
+----------
+1. list all functions available in the GemFire cluster, e.g. GET https://localhost:8080/gemfire-api/v1/functions
+
+http://localhost:8080/gemfire-api/v1/functions
+
+[
+    {
+        "rel": "GetRegions",
+        "href": "http://localhost:8080/gemfire-api/v1/functions/GetRegions"
+    },
+    {
+        "rel": "GetValueForKey",
+        "href": "http://localhost:8080/gemfire-api/v1/functions/GetValueForKey"
+    },
+    {
+        "rel": "GetAllEntries",
+        "href": "http://localhost:8080/gemfire-api/v1/functions/GetAllEntries"
+    },
+    {
+        "rel": "PutKeyFunction",
+        "href": "http://localhost:8080/gemfire-api/v1/functions/PutKeyFunction"
+    }
+]
+
+2. execute function with arguments on regions, members, or group(s)
+POST /gemfire-api/v1/functions/{functionId}?args=value1,value2,...,valueN[&onRegions=region1,region2,...,regionN|&onMembers=member1,member2,...,memberN|&onGroups=group1,group2,...,groupN]
+
+http://localhost:8080/gemfire-api/v1/functions/GetRegions
+java.lang.IllegalArgumentException: The input args for the execute function request is null
+    at com.gemstone.gemfire.internal.cache.execute.MemberFunctionExecutor.withArgs(MemberFunctionExecutor.java:213)
+
+http://localhost:8080/gemfire-api/v1/functions/GetRegions?args=null
+[
+  "region1",
+  "People"
+]
+
+http://localhost:8080/gemfire-api/v1/functions/GetValueForKey?args=2
+
+10
+
+http://localhost:8080/gemfire-api/v1/functions/GetAllEntries?args=1
+
+[
+    {
+        "k11": "v1",
+        "k15": "v5",
+        "k14": "v4",
+        "k13": "v3",
+        "k12": "v2"
+    }
+]
+================================
+Working with GFSH
+
+start locator --name=locatorX --port=11240 --J=-Dgemfire.jmx-manager-http-port=8091
+list members
+list regions
+create region --name=region1 --type=REPLICATE
+start server --name=server1
+list regions
+create region --name=regio1 --type=REPLICATE
+list regions
+put --key='name' --value='Nilkanth' --region=/regio1
+get --region=/regio1 --key='name'
+quit
+start locator --name=locatorX --port=11235 --log-level=config --J=-Dgemfire.jmx-manager-http-port=8090
+start server --name=server1 --server-port=40406
+stop server --dir=server1
+start server --name=serverX --server-port=40405 --log-level=all --J=-Dgemfire.jmx-manager=true --J=-Dgemfire.jmx-manager-start=true
+connect --jmx-manager=localhost[1099] --use-http --url=http://localhost:8080/gemfire/v1
+list members
+list regions
+disconnect
+stop server --dir=serverX
+status server
+stop server
+status server
+start server --name=serverX --server-port=40405 --log-level=all --J=-Dgemfire.jmx-manager=true --J=-Dgemfire.jmx-manager-start=true
+stop server --name=serverX
+connect --jmx-manager=localhost[1099] --use-http --url=http://localhost:8080/gemfire/v1
+status server
+list members
+list regions
+status server
+status server --name=serverX
+disconnect
+stop server --name=serverX
+connect --jmx-manager=localhost[1099] --use-http --url=http://localhost:8080/gemfire/v1
+stop server --name=serverX
+quit
+start server --name=serverY --server-port=40405 --log-level=all --J=-Dgemfire.jmx-manager=true --J=-Dgemfire.jmx-manager-start=true
+connect --jmx-manager=localhost[1099] --use-http --url=http://localhost:8080/gemfire/v1
+list regions
+create region --name=region1 --type=REPLICATE
+list regions
+stop server --name=serverX
+list regions
+stop server --name=serverY
+disconnect
+quit
+start server --name=server1 --server-port=40405 --log-level=fine --J=-Dgemfire.jmx-manager=true --J=-Dgemfire.jmx-manager-start=true
+status server
+status server --name=server1
+connect --jmx-manager=localhost[1099]
+list members
+status server
+status server --name=server1
+stop server --name=server1
+disconnect
+quit
+start server --name=server1 --server-port=40405 --log-level=fine --J=-Dgemfire.jmx-manager=true --J=-Dgemfire.jmx-manager-start=true
+connect --jmx-manager=localhost[1099]
+list members
+stop server --name=server1
+disconnect
+quit
+start server --name=server1 --server-port=40405 --log-level=fine --J=-Dgemfire.jmx-manager=true --J=-Dgemfire.jmx-manager-start=true
+connect --jmx-manager=localhost[1099]
+list members
+stop server --name=server1
+disconnect
+quit
+start server --name=server1 --server-port=40405 --log-level=fine --J=-Dgemfire.jmx-manager=true --J=-Dgemfire.jmx-manager-start=true
+connect --jmx-manager=localhost[1099]
+list members
+stop server --name=server1
+disconnect
+quit
+start server --name=server1 --server-port=40405 --log-level=fine --J=-Dgemfire.jmx-manager=true --J=-Dgemfire.jmx-manager-start=true
+connect --jmx-manager=localhost[1099]
+list members
+create region --name=region1 --type=REPLICATE
+list regions
+stop server --name=server1
+disconnect
+quit
+start server --name=server1 --server-port=40405 --log-level=fine --J=-Dgemfire.jmx-manager=true --J=-Dgemfire.jmx-manager-start=true
+connect --jmx-manager=localhost[1099]
+list members
+stop server --name=server1
+disconnect
+quit
+start server --name=server1 --server-port=40405 --log-level=fine --J=-Dgemfire.jmx-manager=true --J=-Dgemfire.jmx-manager-start=true
+connect --jmx-manager=localhost[1099]
+list members
+stop server --name=server1
+disconnect
+quit
+start server --name=server1 --server-port=40405 --log-level=fine --J=-Dgemfire.jmx-manager=true --J=-Dgemfire.jmx-manager-start=true
+connect --jmx-manager=localhost[1099]
+list members
+list regions
+create region --name=region1 --type=REPLICATE
+list regions
+create region --name=rajesh --type=REPLICATE
+lisr regions
+list regions
+create region --name=region2 --type=REPLICATE
+list members
+list regions
+list members
+get regions
+list regions
+list members
+create region --name=exampleRegion --type=REPLICATE
+list regions
+list members
+history
+history > gfshCmd.txt
+history > gfshCmd
+history gfshCmd.txt
+
+
+
+
+
